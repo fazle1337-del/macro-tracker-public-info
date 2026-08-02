@@ -1,0 +1,44 @@
+# Umbrel community-app-store variant of the stack. Umbrel provides
+# ${APP_DATA_DIR} (persistent app data) and ${APP_SEED} (a per-install secret
+# used to encrypt saved backup / Open Food Facts tokens at rest). For plain
+# `docker compose` on any other host, use the repo-root docker-compose.yml
+# instead. Backup destination and any Open Food Facts login are configured at
+# runtime from the app's Settings, so no secrets are baked in here.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: macro-tracker-db
+    restart: on-failure
+    environment:
+      POSTGRES_DB: macrotracker
+      POSTGRES_USER: macrouser
+      POSTGRES_PASSWORD: changeme123
+    volumes:
+      - ${APP_DATA_DIR}/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U macrouser -d macrotracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: tonybooom/macro-tracker-api:latest
+    container_name: macro-tracker-api
+    restart: on-failure
+    environment:
+      DATABASE_URL: postgres://macrouser:changeme123@macro-tracker-db:5432/macrotracker
+      API_SECRET: myapisecret123
+      NODE_ENV: production
+      APP_SEED: "${APP_SEED}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: tonybooom/macro-tracker-frontend:latest
+    container_name: macro-tracker-frontend
+    restart: on-failure
+    ports:
+      - "8069:80"
+    depends_on:
+      - api

@@ -11,7 +11,9 @@ If you just want to use the app, you don't need any of this.
 ## What you need
 
 - A machine that can run Docker (a Raspberry Pi, a home server, a NAS,
-  an Umbrel box, a cloud VM — anything).
+  an Umbrel box, a cloud VM — anything). The app images are published for
+  both **x86-64 (amd64)** and **ARM64**, so they run on ordinary Intel/AMD
+  servers, VMs and NAS boxes as well as ARM devices like a Raspberry Pi.
 - [Docker](https://docs.docker.com/get-docker/) and the Docker Compose
   plugin installed on it.
 
@@ -26,19 +28,31 @@ cd macro-tracker-public-info
 you like — nothing else is required, the app images are pulled from
 Docker Hub.)
 
-## 2. (Recommended) change the default passwords
+## 2. Change the default secrets (only if internet-facing)
 
-`docker-compose.yml` ships with placeholder credentials so it runs
-out of the box:
+`docker-compose.yml` ships with placeholder credentials so it runs out of
+the box:
 
-- `POSTGRES_PASSWORD: changeme123` (database password)
-- `API_SECRET: myapisecret123` (the key the app uses to talk to your server)
+- `POSTGRES_PASSWORD: changeme123` — the database password
+- `API_SECRET: myapisecret123` — the key the app uses to talk to your server
+- `APP_SEED: change-this-to-a-long-random-string` — encrypts your saved
+  backup / Open Food Facts tokens at rest
 
-They work as-is for a quick trial, but if your server is reachable from
-outside your own network, change both before leaving it running long-term.
-If you do change `API_SECRET`, you'll need to enter that same value as the
-**API key** in step 4 below — leaving the default means you can skip that
-field entirely.
+**If your server only lives on your own private network** (the usual case —
+a Pi or box at home), the defaults are fine. Leave them and skip to step 3.
+
+**If you expose the server to the internet** (a public IP, a domain, a
+reverse proxy open to the world), change all three to your own values
+first:
+
+- **Database password** — this appears in **two** places that must match:
+  `POSTGRES_PASSWORD` on the `db` service, and *inside* `DATABASE_URL` on the
+  `api` service (`postgres://macrouser:<password>@macro-tracker-db:5432/macrotracker`).
+  Change it in both.
+- **`API_SECRET`** — set your own value, then enter that same value as the
+  **API key** in step 4 below (leave it at the default and you can skip that
+  field entirely).
+- **`APP_SEED`** — any long random string of your own.
 
 ## 3. Start it
 
@@ -90,7 +104,10 @@ docker compose up -d
 ## Umbrel users
 
 If you're already running [Umbrel](https://umbrel.com/) and would rather
-install this as an app than run `docker compose` by hand, you can add
-this repository as a custom Umbrel community app store source from
-Umbrel's App Store settings — it ships an `umbrel-app.yml` manifest, so
-it'll show up alongside Umbrel's built-in apps once added.
+install this as an app than run `docker compose` by hand, you can add this
+repository as a **custom community app store**: Umbrel → App Store →
+(top-right ⋯) → *Community App Stores* → add
+`https://github.com/fazle1337-del/macro-tracker-public-info`. It shows up as
+the **"Macro ForgeFit" App Store**, and Macro ForgeFit installs from there
+like any other app (Umbrel manages its data and updates for you). The plain
+`docker compose` steps above are the alternative for non-Umbrel hosts.

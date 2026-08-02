@@ -1,0 +1,25 @@
+manifestVersion: 1
+id: forgefit-macro-tracker
+name: Macro ForgeFit
+tagline: Personal macro and nutrition tracker
+icon: https://raw.githubusercontent.com/fazle1337-del/Tony-Umbrel/master/tony-macro-tracker/frontend/1047711.png
+category: files & productivity
+version: "1.66.0"
+port: 8069
+description: >-
+  A self-hosted macro and nutrition tracking app. Log daily food entries,
+  track protein, carbs and fat, view history charts, and manage your
+  personal food database. Runs on both x86-64 and ARM (multi-arch images).
+  Built with Node/Express and PostgreSQL.
+developer: Macro ForgeFit
+website: https://github.com/fazle1337-del/macro-tracker-public-info
+submitter: ""
+submission: ""
+repo: https://github.com/fazle1337-del/macro-tracker-public-info
+support: https://github.com/fazle1337-del/macro-tracker-public-info/issues
+gallery: []
+releaseNotes: ""
+dependencies: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""

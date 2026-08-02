@@ -1,0 +1,53 @@
+# Self-hosting stack for Macro ForgeFit — PostgreSQL + API + web frontend on
+# port 8069. The app images are multi-arch (linux/amd64 + linux/arm64), so this
+# runs on ordinary x86-64 servers, VMs and NAS boxes as well as ARM devices
+# like a Raspberry Pi. See SELF-HOSTING.md for the full walkthrough.
+#
+# The default credentials below are fine for a server on your own private
+# network. If you expose it to the internet, change them first — see step 2 of
+# SELF-HOSTING.md (note the DB password appears twice: on `db` and inside
+# `DATABASE_URL` on `api`).
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: macro-tracker-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: macrotracker
+      POSTGRES_USER: macrouser
+      POSTGRES_PASSWORD: changeme123
+    volumes:
+      - macro-tracker-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U macrouser -d macrotracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: tonybooom/macro-tracker-api:latest
+    container_name: macro-tracker-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://macrouser:changeme123@macro-tracker-db:5432/macrotracker
+      API_SECRET: myapisecret123
+      NODE_ENV: production
+      # Any long random string — the key that encrypts your saved backup /
+      # Open Food Facts tokens at rest. Fine to leave for a private server;
+      # change it before exposing the server to the internet.
+      APP_SEED: change-this-to-a-long-random-string
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: tonybooom/macro-tracker-frontend:latest
+    container_name: macro-tracker-frontend
+    restart: unless-stopped
+    ports:
+      - "8069:80"
+    depends_on:
+      - api
+
+volumes:
+  macro-tracker-db:
