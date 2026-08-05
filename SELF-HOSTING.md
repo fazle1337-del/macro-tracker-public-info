@@ -46,6 +46,7 @@ On the machine that will be your server:
 ```bash
 git clone https://github.com/fazle1337-del/macro-tracker-public-info.git
 cd macro-tracker-public-info
+chmod +x install.sh
 ./install.sh
 ```
 
