@@ -37,6 +37,16 @@ the internet for the basic (home-network) setup. That's only needed for the
 optional [internet-access](#optional-reach-it-over-the-internet-with-automatic-https)
 section at the end.
 
+> **CPU architecture** doesn't matter — the app images are multi-arch
+> (**amd64 + ARM64**), so the exact same steps work on an Intel/AMD box and on
+> a Raspberry Pi; Docker pulls the right one automatically.
+>
+> **On Windows?** The one-command `install.sh` is a Linux/macOS shell script,
+> so run it inside **WSL2** (which is Linux). Or install **Docker Desktop** and
+> follow the [Manual setup](#manual-setup) `docker compose up -d` steps — those
+> are fully cross-platform. (**macOS** works either way: install Docker Desktop
+> first, then the script or the manual steps.)
+
 ---
 
 ## Quick start (the easy way)
