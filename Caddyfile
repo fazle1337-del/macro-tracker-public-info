@@ -1,0 +1,10 @@
+# Caddy config for Macro ForgeFit (used by docker-compose.https.yml).
+#
+# {$DOMAIN} is read from the DOMAIN env var (set in .env). Caddy automatically
+# obtains and renews a Let's Encrypt certificate for it, and reverse-proxies
+# every request to the app's web frontend container. The frontend already
+# proxies /api to the API container internally, so this one line covers both
+# the UI and the API.
+{$DOMAIN} {
+	reverse_proxy frontend:80
+}
