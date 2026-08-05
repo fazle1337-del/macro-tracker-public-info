@@ -3,10 +3,23 @@
 # runs on ordinary x86-64 servers, VMs and NAS boxes as well as ARM devices
 # like a Raspberry Pi. See SELF-HOSTING.md for the full walkthrough.
 #
-# The default credentials below are fine for a server on your own private
-# network. If you expose it to the internet, change them first — see step 2 of
-# SELF-HOSTING.md (note the DB password appears twice: on `db` and inside
-# `DATABASE_URL` on `api`).
+# Server mode is multi-user (issue #124): each person registers their own
+# account on the server and their logged data is private to them; the food
+# database is shared. The FIRST account registered becomes the household owner.
+# There is no shared API key — authentication is per-user (username + password).
+#
+# The two secrets below have safe-to-run defaults so this works out of the box
+# on a private home network. If you expose the server to the internet, override
+# them — the easiest way is a `.env` file next to this one (see step 3 of
+# SELF-HOSTING.md, or just run ./install.sh which writes strong random values
+# for you):
+#
+#     POSTGRES_PASSWORD=<random>
+#     APP_SEED=<random>
+#
+# APP_SEED signs every account's login token AND encrypts saved backup / Open
+# Food Facts credentials at rest. Changing it later just logs everyone out
+# (they sign in again — no data is lost).
 services:
   db:
     image: postgres:16-alpine
@@ -15,7 +28,7 @@ services:
     environment:
       POSTGRES_DB: macrotracker
       POSTGRES_USER: macrouser
-      POSTGRES_PASSWORD: changeme123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme123}
     volumes:
       - macro-tracker-db:/var/lib/postgresql/data
     healthcheck:
@@ -29,13 +42,9 @@ services:
     container_name: macro-tracker-api
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://macrouser:changeme123@macro-tracker-db:5432/macrotracker
-      API_SECRET: myapisecret123
+      DATABASE_URL: postgres://macrouser:${POSTGRES_PASSWORD:-changeme123}@macro-tracker-db:5432/macrotracker
       NODE_ENV: production
-      # Any long random string — the key that encrypts your saved backup /
-      # Open Food Facts tokens at rest. Fine to leave for a private server;
-      # change it before exposing the server to the internet.
-      APP_SEED: change-this-to-a-long-random-string
+      APP_SEED: ${APP_SEED:-change-this-to-a-long-random-string}
     depends_on:
       db:
         condition: service_healthy
