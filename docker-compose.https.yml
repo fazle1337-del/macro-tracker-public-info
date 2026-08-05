@@ -1,0 +1,47 @@
+# Optional HTTPS + dynamic-DNS overlay for Macro ForgeFit.
+#
+# Use it ON TOP OF docker-compose.yml to expose the server to the internet with
+# an automatic, auto-renewing Let's Encrypt certificate:
+#
+#     docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+#
+# It needs three values (put them in .env next to this file, or let install.sh
+# --domain … --duckdns-token … write them):
+#
+#     DOMAIN=yourname.duckdns.org        # the public hostname Caddy serves
+#     DUCKDNS_SUBDOMAIN=yourname         # just the label, no .duckdns.org
+#     DUCKDNS_TOKEN=xxxxxxxx-xxxx-…       # from https://www.duckdns.org/
+#
+# Prerequisites (one-time, see SELF-HOSTING.md): a free DuckDNS hostname, and
+# ports 80 + 443 forwarded on your router to this machine. Caddy needs port 80
+# reachable to issue the certificate and 443 to serve HTTPS.
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: macro-tracker-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env, e.g. yourname.duckdns.org}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+
+  # Keeps yourname.duckdns.org pointed at your current home IP automatically.
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: macro-tracker-duckdns
+    restart: unless-stopped
+    environment:
+      SUBDOMAINS: ${DUCKDNS_SUBDOMAIN:?set DUCKDNS_SUBDOMAIN in .env}
+      TOKEN: ${DUCKDNS_TOKEN:?set DUCKDNS_TOKEN in .env}
+      UPDATE_IP: ipv4
+
+volumes:
+  caddy-data:
+  caddy-config:
