@@ -55,7 +55,11 @@ say "1/4  Checking Docker…"
 if ! command -v docker >/dev/null 2>&1; then
   warn "Docker is not installed."
   if [ "$(uname -s)" != "Linux" ]; then
-    echo "Please install Docker Desktop from https://docs.docker.com/get-docker/ and re-run." >&2
+    echo "Automatic Docker install is Linux-only." >&2
+    echo "  - macOS / Windows: install Docker Desktop" >&2
+    echo "    (https://docs.docker.com/get-docker/), then re-run this script" >&2
+    echo "    (on Windows, run it from a WSL2 shell), or just follow the manual" >&2
+    echo "    'docker compose up -d' steps in SELF-HOSTING.md." >&2
     exit 1
   fi
   printf "Install Docker now using Docker's official script? [Y/n] "
@@ -119,8 +123,23 @@ for _ in $(seq 1 30); do
   sleep 2
 done
 
-IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
-[ -n "$IP" ] || IP="<this-server-ip>"
+detect_ip() {
+  local ip
+  ip="$(hostname -I 2>/dev/null | awk '{print $1}')"          # Linux
+  [ -n "$ip" ] && { echo "$ip"; return; }
+  if command -v ipconfig >/dev/null 2>&1; then                # macOS
+    for i in en0 en1 en2; do
+      ip="$(ipconfig getifaddr "$i" 2>/dev/null)" || true
+      [ -n "$ip" ] && { echo "$ip"; return; }
+    done
+  fi
+  if command -v ifconfig >/dev/null 2>&1; then                # generic fallback
+    ip="$(ifconfig 2>/dev/null | awk '/inet /{print $2}' | grep -v '^127\.' | head -n1)"
+    [ -n "$ip" ] && { echo "$ip"; return; }
+  fi
+  echo "<this-server-ip>"
+}
+IP="$(detect_ip)"
 
 echo
 if [ -n "$up" ]; then
